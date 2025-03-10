@@ -1,0 +1,128 @@
+.chatBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 50%;
+  gap: 10px;
+}
+
+.chatHeader {
+  font-size: 35px;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.chatHeaderFixed {
+  font-size: 35px;
+  font-weight: 700;
+  text-align: center;
+  position: fixed;
+  top: 20px;
+  z-index: 1;
+}
+
+.messagesContainer {
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 75%;
+  border: 1px solid rgba(178, 223, 222, 1);
+  border-radius: 8px;
+
+  margin-top: -45px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.userMessage {
+  align-self: flex-end;
+  background-color: #d1e7dd;
+  border-radius: 8px;
+  padding: 10px;
+  max-width: 70%;
+}
+
+.botMessage {
+  align-self: flex-start;
+  background-color: #b4c5e7;
+  border-radius: 8px;
+  padding: 10px;
+  max-width: 70%;
+}
+
+.thinkingMessage {
+  align-self: flex-start;
+  color: gray;
+  font-style: italic;
+}
+
+.inputBlock {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(178, 223, 222, 1);
+  border-radius: 8px;
+
+  margin-bottom: 20px;
+}
+
+.inputBlockFixed {
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(178, 223, 222, 1);
+  border-radius: 8px;
+  position: fixed;
+  bottom: 20px;
+  z-index: 1;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px;
+  resize: none;
+  border: none;
+  outline: none;
+  overflow-y: hidden;
+}
+
+.buttonBlock {
+  display: flex;
+  flex-direction: row;
+  justify-content: end;
+  padding: 10px;
+}
+
+.buttonWithTool {
+  height: 30px;
+  width: 50px;
+  border-radius: 8px;
+  background-color: rgba(139, 202, 201, 1);
+
+  position: relative;
+}
+
+.buttonWithTool:hover, .buttonWithTool:focus {
+  background-color: rgba(139, 202, 201, 0.3);
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 50%;
+  left: 85%;
+  background-color: #333;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 10;
+  white-space: normal; 
+  text-align: center; 
+  width: max-content; 
+}

@@ -1,0 +1,74 @@
+.authBlock{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    gap: 15px;
+
+    margin-top: 200px;
+    height: 220px;
+
+    width: 500px;
+
+    border: 1px solid rgba(178, 223, 222, 1);
+    border-radius: 15px;
+
+    padding: 10px;
+}
+
+.authBlock h2{
+    font-size: 35px;
+    font-weight: 700;
+}
+
+.authBlock input{
+    width: 90%;
+    margin-bottom: -5px;
+
+    height: 35px;
+
+    border: 1px solid rgba(178, 223, 222, 1);
+    border-radius: 8px;
+
+    padding: 5px;
+}
+
+.authBlock button{
+    width: 100px;
+
+    height: 45px;
+
+    border: 1px solid rgba(178, 223, 222, 1);
+    border-radius: 8px;
+}
+
+.authBlock button:hover, .authBlock button:focus{
+    background-color: rgba(139, 202, 201, 0.3);
+}
+
+.buttonBlock{
+    display: flex;
+    flex-direction: row;
+
+    gap: 25px;
+}
+
+@media (max-width: 520px) {
+    .authBlock{
+        width: 350px;
+    }
+
+    .authBlock button{
+        height: 40px;
+    }
+}
+
+@media (max-width: 370px) {
+    .authBlock{
+        width: 300px;
+    }
+
+    .authBlock button{
+        height: 35px;
+    }
+}
