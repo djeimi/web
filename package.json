@@ -10,11 +10,15 @@
     "axios": "^1.8.1",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "json": "^11.0.0",
+    "openai": "^4.86.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-scripts": "5.0.1",
     "sqlite3": "^5.1.7",
+    "termcolor": "^0.2.0",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

@@ -1,52 +1,73 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styles from './Chat.module.css';
+import axios from 'axios';
 
 const Chat = ({ userId }) => {
-  const [messages, setMessages] = useState([
-    { text: "Пример сообщения пользователя 1, Пример сообщения пользователя 1,Пример сообщения пользователя 1 Пример сообщения пользователя 1,Пример сообщения пользователя 1,Пример сообщения пользователя 1,Пример сообщения пользователя 1", isUser: true },
-    { text: "Пример сообщения user, Пример сообщения user,Пример сообщения user,Пример сообщения user,Пример сообщения user,Пример сообщения user,Пример сообщения user", isUser: false },
-    { text: "Пример сообщения пользователя", isUser: true },
-    { text: "Пример сообщения user", isUser: false },
-    { text: "Пример сообщения пользователя", isUser: true },
-    { text: "Пример сообщения user", isUser: false },
-    { text: "Пример сообщения пользователя", isUser: true },
-    { text: "Пример сообщения user", isUser: false },
-    { text: "Пример сообщения пользователя", isUser: true },
-    { text: "Пример сообщения user", isUser: false },
-    { text: "Пример сообщения пользователя", isUser: true },
-    { text: "Пример сообщения user", isUser: false },
-    { text: "Пример сообщения пользователя", isUser: true },
-    { text: "Пример сообщения user", isUser: false },
-    { text: "Пример сообщения пользователя", isUser: true },
-    { text: "Пример сообщения user", isUser: false },
-    { text: "Пример сообщения пользователя", isUser: true },
-    { text: "Пример сообщения user", isUser: false },
-    { text: "Пример сообщения пользователя", isUser: true },
-    { text: "Пример сообщения user", isUser: false },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isThinking, setIsThinking] = useState(false);
-  const [isFirstMessageSent, setIsFirstMessageSent] = useState(true);
+  const [isFirstMessageSent, setIsFirstMessageSent] = useState(false);
+  const [trainingState, setTrainingState] = useState(null);
   const textareaRef = useRef(null);
   const chatBlockRef = useRef(null);
   const messagesEndRef = useRef(null);
 
+  useEffect(() => {
+    const fetchInitialMessage = async () => {
+      try {
+        const response = await axios.post('http://localhost:5000/process-message', {
+          userId,
+          message: '',
+          chatHistory: [],
+        });
+        setMessages([{ text: response.data.result, isUser: false }]);
+      } catch (error) {
+        console.error("Ошибка при получении начального сообщения:", error);
+      }
+    };    
+
+    if (!isFirstMessageSent) {
+      fetchInitialMessage();
+      setIsFirstMessageSent(true);
+    }
+  }, [userId, isFirstMessageSent]);
+
   const handleSendMessage = async () => {
     if (inputValue.trim()) {
-      setMessages([...messages, { text: inputValue, isUser: true }]);
+      setMessages((prevMessages) => [...prevMessages, { text: inputValue, isUser: true }]);
       setInputValue('');
       setIsThinking(true);
-      setIsFirstMessageSent(true);
-
-      // Uncomment when getBotResponse function is available
-      // const botResponse = await getBotResponse(inputValue);
-      // setMessages((prevMessages) => [
-      //   ...prevMessages,
-      //   { text: botResponse, isUser: false },
-      // ]);
-      setIsThinking(false);
+  
+      try {
+        const response = await axios.post('http://localhost:5000/process-message', {
+          userId,
+          message: inputValue,
+          chatHistory: messages.map(msg => ({ role: msg.isUser ? 'user' : 'assistant', content: msg.text })),
+          trainingState,
+        });
+  
+        if (Array.isArray(response.data.result)) {
+          response.data.result.forEach(message => {
+            setMessages((prevMessages) => [...prevMessages, { text: message, isUser: false }]);
+            console.log(message)
+          });
+        } else {
+          console.log(response.data.result)
+          setMessages((prevMessages) => [...prevMessages, { text: response.data.result, isUser: false }]);
+        }
+  
+        setTrainingState(response.data.trainingState);
+      } catch (error) {
+        console.error("Ошибка при отправке сообщения:", error);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { text: 'Ошибка при обработке сообщения.', isUser: false },
+        ]);
+      } finally {
+        setIsThinking(false);
+      }
     }
-  };
+  };     
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -83,22 +104,40 @@ const Chat = ({ userId }) => {
     setShowTooltip(false);
   };
 
+  const [showTooltipForClear, setShowTooltipForClear] = useState(false);
+
+  const handleMouseEnterClearButt = () => {
+    setShowTooltipForClear(true);
+  };
+
+  const handleMouseLeaveClearButt = () => {
+    setShowTooltipForClear(false);
+  };
+
+  const handleClearChat = async () => {
+    setMessages([]);
+    
+    setTrainingState(null);
+    
+    setIsFirstMessageSent(false);
+
+    console.log("Очищена история чата.");
+  }; 
+
   return (
     <div className={styles.chatBlock} ref={chatBlockRef}>
       <h2 className={isFirstMessageSent ? styles.chatHeaderFixed : styles.chatHeader}>
         Chat with English Coach
       </h2>
-      {isFirstMessageSent && (
-        <div className={styles.messagesContainer}>
-          {messages.map((msg, index) => (
-            <div key={index} className={msg.isUser ? styles.userMessage : styles.botMessage}>
-              {msg.text}
-            </div>
-          ))}
-          {isThinking && <div className={styles.thinkingMessage}>AI ассистент думает..</div>}
-          <div ref={messagesEndRef} />
-        </div>
-      )}
+      <div className={styles.messagesContainer}>
+        {messages.map((msg, index) => (
+          <div key={index} className={msg.isUser ? styles.userMessage : styles.botMessage}>
+            {Array.isArray(msg.text) ? msg.text.join('\n') : msg.text}
+          </div>
+        ))}
+        {isThinking && <div className={styles.thinkingMessage}>AI ассистент думает..</div>}
+        <div ref={messagesEndRef} />
+      </div>
       <div className={isFirstMessageSent ? styles.inputBlockFixed : styles.inputBlock}>
         <textarea
           ref={textareaRef}
@@ -109,16 +148,26 @@ const Chat = ({ userId }) => {
           onKeyDown={handleKeyDown}
         />
         <div className={styles.buttonBlock}>
-          <button 
+          <button
             onClick={handleSendMessage}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             className={styles.buttonWithTool}>Send</button>
+          <button
+            onClick={handleClearChat}
+            onMouseEnter={handleMouseEnterClearButt}
+            onMouseLeave={handleMouseLeaveClearButt}
+            className={styles.buttonWithTool}>Clear all</button>
         </div>
         {showTooltip && (
           <div className={styles.tooltip}>
-            Отправка сообщения - по нажатию "Enter",<br /> 
+            Отправка сообщения - по нажатию "Enter",<br />
             перенос строки - "Shift + Enter"
+          </div>
+        )}
+        {showTooltipForClear && (
+          <div className={styles.tooltipClear}>
+            Очистить всю историю чата
           </div>
         )}
       </div>

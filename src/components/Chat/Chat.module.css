@@ -97,11 +97,13 @@ textarea {
   flex-direction: row;
   justify-content: end;
   padding: 10px;
+
+  gap: 5px;
 }
 
 .buttonWithTool {
-  height: 30px;
-  width: 50px;
+  height: 40px;
+  width: 80px;
   border-radius: 8px;
   background-color: rgba(139, 202, 201, 1);
 
@@ -112,10 +114,10 @@ textarea {
   background-color: rgba(139, 202, 201, 0.3);
 }
 
-.tooltip {
+.tooltip, .tooltipClear {
   position: absolute;
   bottom: 50%;
-  left: 85%;
+  left: 77%;
   background-color: #333;
   color: #fff;
   padding: 5px 10px;
@@ -125,4 +127,8 @@ textarea {
   white-space: normal; 
   text-align: center; 
   width: max-content; 
+}
+
+.tooltipClear {
+  left: 88%;
 }
