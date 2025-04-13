@@ -5,7 +5,7 @@ const { invokeModel } = require('../services/modelService');
 function loadDictionaries () {
   const combinedDict = {};
   
-  const trainData = fs.readFileSync('train.txt', 'utf-8').split('\n');
+  const trainData = fs.readFileSync('utils/train.txt', 'utf-8').split('\n');
   trainData.forEach(line => {
     const parts = line.split(';');
     if (parts.length === 3) {
@@ -18,7 +18,7 @@ function loadDictionaries () {
     }
   });
   
-  const trainJsonData = fs.readFileSync('_train.txt', 'utf-8').split('\n');
+  const trainJsonData = fs.readFileSync('utils/_train.txt', 'utf-8').split('\n');
   trainJsonData.forEach(line => {
     const entry = JSON.parse(line);
     const word = entry.word;
