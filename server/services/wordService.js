@@ -63,7 +63,7 @@ async function resetWordStats (userId, word) {
   });
 };
 
-async function trainWords(userId, count, complexity, specificWords = [], useLastTrained = false) {
+async function trainWords(userId, count, complexity, specificWords = [], useLastTrained = false, usedSentences = new Set()) {
   const words = specificWords.length > 0 ? specificWords : await getVoc(userId);
   const maxWords = await getVocLen(userId);
 
@@ -101,7 +101,8 @@ async function trainWords(userId, count, complexity, specificWords = [], useLast
     db.serialize(() => {
       let promises = selectedWords.map(word => {
         return new Promise((resolveWord, rejectWord) => {
-          generateWord(word, complexity).then(sentence => {
+          generateWord(word, complexity, usedSentences).then(sentence => {
+            usedSentences.add(sentence.content);
             const generated_sentence = sentence.content;
             const result = { word, generated_sentence };
   

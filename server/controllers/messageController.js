@@ -132,17 +132,23 @@ exports.processMessage = async (req, res) => {
             }
           } else if (functionName === 'train_words') {
             const count = arguments.quantity;
-            const complexity = arguments.complexity;
+            const complexity = arguments.complexity || 'средний';
             const specificWords = arguments.specificWords || [];
             const useLastTrained = arguments.useLastTrained || false;
 
-            const result = await trainWords(userId, count, complexity, specificWords, useLastTrained);
+            trainingState = trainingState || { 
+              usedSentences: new Set()
+            };
+
+            const result = await trainWords(userId, count, complexity, specificWords, useLastTrained, trainingState.usedSentences);
 
             const firstSentence = result.results[0];
             trainingState = {
               inProgress: true,
               currentSentence: firstSentence,
-              remainingSentences: result.results.slice(1)
+              remainingSentences: result.results.slice(1),
+              usedSentences: new Set([...trainingState.usedSentences, ...result.results.map(s => s.generated_sentence)]),
+              complexity: complexity
             };
 
             chatHistory.push({ role: 'assistant', content: firstSentence.generated_sentence });

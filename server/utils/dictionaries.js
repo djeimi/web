@@ -38,7 +38,7 @@ function loadDictionaries () {
 
 const combinedDict = loadDictionaries();
 
-function prompt(word, complexity) {
+function prompt(word, complexity, usedSentences = new Set()) {
   let basePrompt;
 
   const complexityLevels = {
@@ -46,11 +46,17 @@ function prompt(word, complexity) {
     '2': 'intermediate English with some context',
     '3': 'advanced English with precise terminology, idioms'
   };
+
+  const usedExamplesStr = usedSentences.size > 0 
+    ? `\nDo not use this examples in any way: ${Array.from(usedSentences).join(', ')}. 
+    Make sentence structure completely different from this examples`
+    : '';
   
   const examples = combinedDict[word] || [];
   const examplesStr = examples.join('\n');
   basePrompt = `User provided the keyword ${word}.
       Use the following example sentences to improve generation:\n${examplesStr}
+      \n${usedExamplesStr}
       \nGenerate a new sentence for English practice with this word, replacing it with '___',
       user requested training difficulty - ${complexityLevels[complexity]}`;
 
@@ -62,9 +68,32 @@ function prompt(word, complexity) {
   return basePrompt;
 };
 
-async function generateWord (word, complexity) {
+async function generateWord (word, complexity, usedSentences = new Set()) {
   console.log('Generating sentence for word ', word);
-  return await invokeModel([{ role: 'system', content: prompt(word, complexity) }]);
+  const MAX_ATTEMPTS = 3;
+  let attempts = 0;
+  let generatedSentence;
+
+  while (attempts < MAX_ATTEMPTS) {
+    generatedSentence = await invokeModel([{ 
+      role: 'system', 
+      content: prompt(word, getComplexity(complexity), usedSentences) 
+    }]);
+
+    // Проверяем уникальность предложения
+    if (!usedSentences.has(generatedSentence.content)) {
+      break;
+    }
+    
+    console.log(`Duplicate detected. Regenerating (attempt ${attempts + 1})`);
+    attempts++;
+  }
+
+  if (attempts === MAX_ATTEMPTS) {
+    console.warn('Max regeneration attempts reached. Returning last generated sentence.');
+  }
+
+  return generatedSentence;
 };
 
 async function getComplexity (complexity) {
