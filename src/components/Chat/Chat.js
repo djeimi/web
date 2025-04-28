@@ -9,6 +9,7 @@ import Forecast from '../AdditionalComponents/Forecast';
 const Chat = ({ userId }) => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
+  const [isFirstMessageSent, setIsFirstMessageSent] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [trainingState, setTrainingState] = useState(null);
   const textareaRef = useRef(null);
@@ -27,9 +28,11 @@ const Chat = ({ userId }) => {
         console.error("Ошибка при получении начального сообщения:", error);
       }
     };
-
-    fetchInitialMessage();
-  }, [userId]);
+    if (!isFirstMessageSent) {
+      fetchInitialMessage();
+      setIsFirstMessageSent(true);
+    }
+  }, [userId, isFirstMessageSent]);
 
   const handleSendMessage = async () => {
     if (inputValue.trim()) {
@@ -132,6 +135,10 @@ const Chat = ({ userId }) => {
   const handleClearChat = () => {
     setMessages([]);
     setTrainingState(null);
+
+    setIsFirstMessageSent(false);
+
+    console.log("Очищена история чата.");
   };
 
   useEffect(() => {
