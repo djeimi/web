@@ -39,8 +39,6 @@ const Chat = ({ userId }) => {
       setMessages(prev => [...prev, { text: inputValue, isUser: true }]);
       setInputValue('');
       setIsThinking(true);
-
-      console.log(messages)
   
       try {
         const response = await axios.post('http://localhost:5000/process-message', {
