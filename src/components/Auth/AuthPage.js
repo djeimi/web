@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styles from './AuthPage.module.css';
 import axios from 'axios';
 
+
 const AuthPage = ({ onLogin, onRegister }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');

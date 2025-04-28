@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styles from './Chat.module.css';
 import axios from 'axios';
+import Dictionary from '../AdditionalComponents/Dictionary';
+import Statistics from '../AdditionalComponents/Statistics';
+import DetailedStatistics from '../AdditionalComponents/DetailedStatistics';
+import Forecast from '../AdditionalComponents/Forecast';
 
 const Chat = ({ userId }) => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isThinking, setIsThinking] = useState(false);
-  const [isFirstMessageSent, setIsFirstMessageSent] = useState(false);
   const [trainingState, setTrainingState] = useState(null);
   const textareaRef = useRef(null);
-  const chatBlockRef = useRef(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -24,17 +26,14 @@ const Chat = ({ userId }) => {
       } catch (error) {
         console.error("Ошибка при получении начального сообщения:", error);
       }
-    };    
+    };
 
-    if (!isFirstMessageSent) {
-      fetchInitialMessage();
-      setIsFirstMessageSent(true);
-    }
-  }, [userId, isFirstMessageSent]);
+    fetchInitialMessage();
+  }, [userId]);
 
   const handleSendMessage = async () => {
     if (inputValue.trim()) {
-      setMessages((prevMessages) => [...prevMessages, { text: inputValue, isUser: true }]);
+      setMessages(prev => [...prev, { text: inputValue, isUser: true }]);
       setInputValue('');
       setIsThinking(true);
   
@@ -47,45 +46,20 @@ const Chat = ({ userId }) => {
         });
   
         if (Array.isArray(response.data.result)) {
-          response.data.result.forEach(message => {
-            setMessages((prevMessages) => [...prevMessages, { text: message, isUser: false }]);
-            console.log(message)
-          });
+          setMessages(prev => [...prev, ...response.data.result.map(text => ({ text, isUser: false }))]);
         } else {
-          console.log(response.data.result)
-          setMessages((prevMessages) => [...prevMessages, { text: response.data.result, isUser: false }]);
+          setMessages(prev => [...prev, { text: response.data.result, isUser: false }]);
         }
   
         setTrainingState(response.data.trainingState);
       } catch (error) {
         console.error("Ошибка при отправке сообщения:", error);
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { text: 'Ошибка при обработке сообщения.', isUser: false },
-        ]);
+        setMessages(prev => [...prev, { text: 'Ошибка при обработке сообщения.', isUser: false }]);
       } finally {
         setIsThinking(false);
       }
     }
-  };     
-
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    textarea.style.height = 'auto';
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 150)}px`;
-  }, [inputValue]);
-
-  useEffect(() => {
-    const chatBlock = chatBlockRef.current;
-    const fixedHeader = document.querySelector(`.${styles.chatHeaderFixed}`);
-    if (fixedHeader && chatBlock) {
-      fixedHeader.style.width = `${chatBlock.offsetWidth}px`;
-    }
-  }, [isFirstMessageSent]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -94,83 +68,163 @@ const Chat = ({ userId }) => {
     }
   };
 
-  const [showTooltip, setShowTooltip] = useState(false);
-
-  const handleMouseEnter = () => {
-    setShowTooltip(true);
+  const [showDictionary, setShowDictionary] = useState(false);
+  const [dictionary, setDictionary] = useState([]);
+  const handleGetDictionary = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/dictionary', { params: { user_id: userId } });
+      setDictionary(response.data.row);
+      setShowDictionary(true);
+    } catch (error) {
+      console.error("Ошибка при получении словаря:", error);
+    }
+  };
+  
+  const [showStatistics, setShowStatistics] = useState(false);
+  const [statistics, setStatistics] = useState([]);
+  const [vocabulary, setVocabulary] = useState([]);
+  const handleGetStatistics = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/statistics/additionalInfo', { params: { user_id: userId } });
+      const addResponse = await axios.get('http://localhost:5000/vocabulary', { params: { user_id: userId } });
+      setStatistics(response.data.row);
+      setVocabulary(addResponse.data.row);
+      setShowStatistics(true);
+    } catch (error) {
+      console.error("Ошибка при получении статистики:", error);
+    }
   };
 
-  const handleMouseLeave = () => {
-    setShowTooltip(false);
+  const [showDetailedStatistics, setShowDetailedStatistics] = useState(false);
+  
+  const [detailedStatistics, setDetailedStatistics] = useState([]);
+  const handleGetDetailedStatistics = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/statistics/additionalInfo/word', { params: { user_id: userId } });
+      setDetailedStatistics(response.data.row);
+      setShowDetailedStatistics(true);
+    } catch (error) {
+      console.error("Ошибка при получении детальной статистики:", error);
+    }
   };
 
-  const [showTooltipForClear, setShowTooltipForClear] = useState(false);
+  const [forecast, setForecast] = useState(null);
+  const [showForecast, setShowForecast] = useState(false);
+  const handleGetForecast = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/forecast', { 
+        params: { user_id: userId } ,
+        timeout: 5000
+      });
+      
+      if (response.data.error) {
+        alert(response.data.error);
+        return;
+      }
 
-  const handleMouseEnterClearButt = () => {
-    setShowTooltipForClear(true);
+      setForecast(response.data);
+      setShowForecast(true);
+    } catch (error) {
+      console.error("Ошибка при получении прогноза:", error);
+    }
   };
 
-  const handleMouseLeaveClearButt = () => {
-    setShowTooltipForClear(false);
-  };
-
-  const handleClearChat = async () => {
+  const handleClearChat = () => {
     setMessages([]);
-    
     setTrainingState(null);
-    
-    setIsFirstMessageSent(false);
+  };
 
-    console.log("Очищена история чата.");
-  }; 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 150)}px`;
+  }, [inputValue]);
 
   return (
-    <div className={styles.chatBlock} ref={chatBlockRef}>
-      <h2 className={isFirstMessageSent ? styles.chatHeaderFixed : styles.chatHeader}>
-        Chat with English Coach
-      </h2>
-      <div className={styles.messagesContainer}>
-        {messages.map((msg, index) => (
-          <div key={index} className={msg.isUser ? styles.userMessage : styles.botMessage}>
-            {Array.isArray(msg.text) ? msg.text.join('\n') : msg.text}
-          </div>
-        ))}
-        {isThinking && <div className={styles.thinkingMessage}>AI ассистент думает..</div>}
-        <div ref={messagesEndRef} />
-      </div>
-      <div className={isFirstMessageSent ? styles.inputBlockFixed : styles.inputBlock}>
-        <textarea
-          ref={textareaRef}
-          placeholder="Ask English coach"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          style={{ maxHeight: '150px', overflowY: 'auto' }}
-          onKeyDown={handleKeyDown}
-        />
-        <div className={styles.buttonBlock}>
-          <button
-            onClick={handleSendMessage}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            className={styles.buttonWithTool}>Send</button>
-          <button
-            onClick={handleClearChat}
-            onMouseEnter={handleMouseEnterClearButt}
-            onMouseLeave={handleMouseLeaveClearButt}
-            className={styles.buttonWithTool}>Clear all</button>
+    <div className={styles.chatContainer}>
+      <header className={styles.chatHeader}>
+        <h2>Chat with English Coach</h2>
+      </header>
+
+      <div className={styles.mainContent}>
+        <div className={styles.leftPanel}>
+          <button onClick={handleGetDictionary} className={styles.panelButton}>
+            Получить все слова
+          </button>
         </div>
-        {showTooltip && (
-          <div className={styles.tooltip}>
-            Отправка сообщения - по нажатию "Enter",<br />
-            перенос строки - "Shift + Enter"
+
+        <div className={styles.centerColumn}>
+          <div className={styles.chatArea}>
+            <div className={styles.messages}>
+              {messages.map((msg, index) => (
+                <div key={index} className={msg.isUser ? styles.userMessage : styles.botMessage}>
+                  {Array.isArray(msg.text) ? msg.text.join('\n') : msg.text}
+                </div>
+              ))}
+              {isThinking && <div className={styles.thinking}>AI ассистент думает..</div>}
+              <div ref={messagesEndRef} />
+            </div>
           </div>
-        )}
-        {showTooltipForClear && (
-          <div className={styles.tooltipClear}>
-            Очистить всю историю чата
-          </div>
-        )}
+
+          <footer className={styles.inputArea}>
+            <textarea
+              ref={textareaRef}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask English coach"
+            />
+            <div className={styles.buttons}>
+              <button onClick={handleSendMessage}>Send</button>
+              <button onClick={handleClearChat}>Clear</button>
+            </div>
+          </footer>
+        </div>
+
+        <div className={styles.rightPanel}>
+          <button onClick={handleGetStatistics} className={styles.panelButton}>
+            Статистика
+          </button>
+          <button onClick={handleGetDetailedStatistics} className={styles.panelButton}>
+            Детализированная статистика
+          </button>
+          <button onClick={handleGetForecast} className={styles.panelButton}>
+            Прогноз
+          </button>
+        </div>
       </div>
+
+      {showDictionary && (
+        <>
+          <div className={styles.overlay} onClick={() => setShowDictionary(false)} />
+          <Dictionary listOfWords={dictionary} onClose={() => setShowDictionary(false)} />
+        </>
+      )}
+
+      {showStatistics && (
+        <>
+          <div className={styles.overlay} onClick={() => setShowStatistics(false)} />
+          <Statistics data={statistics} vocabulary={vocabulary} onClose={() => setShowStatistics(false)} />
+        </>
+      )}
+
+      {showDetailedStatistics && (
+        <>
+          <div className={styles.overlay} onClick={() => setShowDetailedStatistics(false)} />
+          <DetailedStatistics data={detailedStatistics} onClose={() => setShowDetailedStatistics(false)} />
+        </>
+      )}
+
+      {showForecast && (
+        <>
+          <div className={styles.overlay} onClick={() => setShowForecast(false)} />
+          <Forecast data={forecast} onClose={() => setShowForecast(false)} />
+        </>
+      )}
     </div>
   );
 };
