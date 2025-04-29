@@ -4,6 +4,8 @@ const db = require('../utils/database');
 const bcrypt = require('bcrypt');
 const { makeForecast } = require('../services/forecastService.js');
 
+const { simulateTraining } = require('../tests/trainingSimulator.js');
+
 const saltRounds = 10;
 
 router.post('/register', async (req, res) => {
@@ -374,5 +376,9 @@ router.get('/forecast', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+router.get('/simulateTraining', async (req, res) => {
+  simulateTraining();
+})
 
 module.exports = router;

@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Загрузка данных
-with open('generation_results_with_adlearning.json', 'r', encoding='utf-8') as f:
+with open('C:\\Users\\djeim\\Desktop\\Диплом\\24.02\\web\\server\\generation_results_without_adlearning.json', 'r', encoding='utf-8') as f:
     data = json.load(f)
 
 # Инициализация LanguageTool
@@ -45,7 +45,7 @@ for word, sentences in data.items():
 accuracy_percent = (correct_sentences / total_sentences) * 100 if total_sentences > 0 else 0
 average_similarity = sum(similarity_scores) / len(similarity_scores) if similarity_scores else 0
 
-print("\nРезультаты generation_results_with_adlearning.json:")
+print("\nРезультаты generation_results_without_adlearning.json:")
 print(f"Всего предложений: {total_sentences}")
 print(f"Грамматически верных: {correct_sentences}")
 print(f"Процент правильных: {accuracy_percent:.2f}%")

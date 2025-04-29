@@ -25,3 +25,5 @@ yarn-error.log*
 
 server/database.db
 server/temp_data.csv
+server/generation_results_with_adlearning.json
+server/generation_results_without_adlearning.json
