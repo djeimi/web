@@ -6,7 +6,7 @@ import { FaTimes } from 'react-icons/fa';
 const Forecast = ({ data, onClose }) => {
     const forecastMessage = data.is_achievable 
         ? `При текущем темпе обучения вы достигнете 90% правильных ответов через ${data.days_to_90} дней (к ${data.forecast_date}). Ваш текущий процент: ${data.current_rate.toFixed(1)}%`
-        : `При текущем темпе обучения достижение 90% правильных ответов маловероятно. Ваш текущий процент: ${data.current_rate.toFixed(1)}%`;
+        : `При текущем темпе обучения достижение 90% правильных ответов маловероятно в следующие 60 дней. Ваш текущий процент: ${data.current_rate.toFixed(1)}%`;
 
     const img = `data:image/png;base64,${data.img}`;
     return (

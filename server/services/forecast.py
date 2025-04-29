@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     model.fit(df)
     
-    future = model.make_future_dataframe(periods=30)
+    future = model.make_future_dataframe(periods=60)
     forecast = model.predict(future)
     
     plot_path = generate_plot(forecast, df, username)
