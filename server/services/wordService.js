@@ -1,5 +1,5 @@
 const db = require('../utils/database');
-const { generateWord } = require('../utils/dictionaries');
+const { generateWord, getComplexity } = require('../utils/dictionaries');
 const { invokeModel } = require('../services/modelService');
 
 
@@ -186,14 +186,14 @@ function logAnswer(userId, word, isCorrect) {
   );
 }
 
-async function generateHint(word, complexity) {
+async function generateHint(word, complexity, sentence) {
   const complexityLevels = {
     'легкий': 'simple English using basic vocabulary',
     'средний': 'intermediate English with some context',
     'сложный': 'advanced English with precise terminology, idioms'
   };
 
-  const prompt = `Give a ${complexityLevels[complexity]} definition or description for "${word}" 
+  const prompt = `Give a ${complexityLevels[complexity]} definition or description for "${word}" in context of sentence: "${sentence}"
   that would help guess the word. Never mention the word itself. 
   Example for "apple": "A common fruit that grows on trees, often red or green"`;
 
@@ -228,4 +228,75 @@ async function updateWordRating(userId, word, isCorrect, attempts) {
   });
 }
 
-module.exports = { saveWord, getVocLen, checkWordExists, resetWordStats, trainWords, updateWordRating, logAnswer, getVoc, generateHint};
+async function checkAnswer(userAnswer, correctAnswer, complexity) {
+  const result = {
+    isCorrect: false,
+    userAnswer,
+    correctAnswer
+  };
+
+  if (userAnswer === correctAnswer) {
+    result.isCorrect = true;
+    return result;
+  }
+  
+  const numberComplexity = await getComplexity(complexity);
+
+  const typoThreshold = {
+    '1': 3,  // для низкой сложности - более лояльны
+    '2': 1,  // для средней сложности
+    '3': 0   // для высокой сложности - строгая проверка
+  }[numberComplexity];
+
+  if (typoThreshold > 0) {
+    const distance = levenshteinDistance(userAnswer, correctAnswer);
+    console.log(distance)
+
+    if (distance <= typoThreshold) {
+      result.isCorrect = true;
+      return result;
+    }
+  }
+
+  // Проверка через модель
+  const prompt = `Student answer: "${userAnswer}"
+                  Correct answer: "${correctAnswer}"
+                  Training complexity: ${complexity}
+
+                  Consider:
+                  - Minor spelling mistakes
+                  - Common typos
+                  - Phonetic similarity
+
+                  Should this be accepted as correct?
+                  Respond ONLY with "True" or "False".`;
+
+  try {
+    const response = await invokeModel([{ role: 'system', content: prompt }]);
+    result.isCorrect = response.content.trim().toLowerCase().includes('true');
+    return result;
+  } catch (error) {
+    console.error('Error checking answer:', error);
+    return result;
+  }
+}
+
+function levenshteinDistance(a, b) {
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+  
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      const cost = b.charAt(i-1) === a.charAt(j-1) ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i-1][j] + 1,
+        matrix[i][j-1] + 1,
+        matrix[i-1][j-1] + cost
+      );
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
+module.exports = { saveWord, getVocLen, checkWordExists, resetWordStats, trainWords, updateWordRating, logAnswer, getVoc, generateHint, checkAnswer};

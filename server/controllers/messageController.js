@@ -1,5 +1,4 @@
-const { saveWord, getVocLen, checkWordExists, trainWords, updateWordRating, logAnswer, generateHint } = require('../services/wordService');
-const { invokeModel } = require('../services/modelService');
+const { saveWord, getVocLen, checkWordExists, trainWords, updateWordRating, logAnswer, generateHint, checkAnswer } = require('../services/wordService');
 const { saveWordTools, trainWordTools } = require('../utils/tools');
 const { OpenAI } = require('openai');
 const client = new OpenAI({
@@ -25,19 +24,23 @@ exports.processMessage = async (req, res) => {
     if (trainingState && trainingState.inProgress) {
       const { word, sentence } = trainingState.currentSentence;
       const userAnswer = message.trim().toLowerCase();
-      const isCorrect = userAnswer === word.trim().toLowerCase();
-      
-      // Логируем попытку
-      await logAnswer(userId, word, isCorrect);
+      const checkResult = await checkAnswer(userAnswer, word.trim().toLowerCase(), trainingState.complexity);
+      await logAnswer(userId, word, checkResult.isCorrect);
       
       // Обновляем состояние попыток
       trainingState.attempts = trainingState.attempts || 1;
       
       let feedbackMessage;
-      
-      if (isCorrect) {
+  
+      if (checkResult.isCorrect) {
         await updateWordRating(userId, word, true, trainingState.attempts);
-        feedbackMessage = `Correct! ${trainingState.attempts === 1 ? '🎉' : 'You got it with a hint! 👍'}`;
+        
+        if (userAnswer === word) {
+          feedbackMessage = `Perfect! ${word.charAt(0).toUpperCase() + word.slice(1)} is correct! 🎉`;
+        } else {
+          feedbackMessage = `Almost! You wrote "${userAnswer}", but the correct spelling is "${word}". 
+                             Still counted as correct! 👍`;
+        }
         
         // Переходим к следующему предложению
         const nextSentence = trainingState.remainingSentences.shift();
@@ -63,7 +66,7 @@ exports.processMessage = async (req, res) => {
       } else {
         if (trainingState.attempts === 1) {
           // Первая ошибка - даем подсказку
-          const hint = await generateHint(word, trainingState.complexity);
+          const hint = await generateHint(word, trainingState.complexity, trainingState.currentSentence.sentence);
           trainingState.attempts = 2;
           trainingState.hintGiven = true;
           feedbackMessage = `Incorrect. Try again! 💡 Hint: ${hint}`;

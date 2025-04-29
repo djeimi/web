@@ -54,6 +54,7 @@ function prompt(word, complexity, usedSentences = new Set()) {
   
   const examples = combinedDict[word] || [];
   const examplesStr = examples.join('\n');
+  
   basePrompt = `User provided the keyword ${word}.
       Use the following example sentences to improve generation:\n${examplesStr}
       \n${usedExamplesStr}
@@ -61,26 +62,35 @@ function prompt(word, complexity, usedSentences = new Set()) {
       user requested training difficulty - ${complexityLevels[complexity]}`;
 
   // basePrompt = `User provided the keyword ${word}.
+  //     \n${usedExamplesStr}
   //     \nGenerate a new sentence for English practice with this word, replacing it with '___',
-  //     user requested training difficulty - ${complexity}`;
+  //     user requested training difficulty - ${complexityLevels[complexity]}`;
 
   console.log('Base Prompt', basePrompt);
   return basePrompt;
 };
 
-async function generateWord (word, complexity, usedSentences = new Set()) {
+async function generateWord(word, complexity, usedSentences = new Set()) {
+  if (!(usedSentences instanceof Set)) {
+    usedSentences = new Set(usedSentences);
+  }
+
   console.log('Generating sentence for word ', word);
   const MAX_ATTEMPTS = 3;
   let attempts = 0;
   let generatedSentence;
 
+  // Сначала получаем сложность
+  const actualComplexity = await getComplexity(complexity);
+
   while (attempts < MAX_ATTEMPTS) {
+    // Теперь передаем уже вычисленную сложность
     generatedSentence = await invokeModel([{ 
       role: 'system', 
-      content: prompt(word, getComplexity(complexity), usedSentences) 
+      content: prompt(word, actualComplexity, usedSentences) 
     }]);
 
-    // Проверяем уникальность предложения
+    // Check uniqueness
     if (!usedSentences.has(generatedSentence.content)) {
       break;
     }
@@ -92,7 +102,6 @@ async function generateWord (word, complexity, usedSentences = new Set()) {
   if (attempts === MAX_ATTEMPTS) {
     console.warn('Max regeneration attempts reached. Returning last generated sentence.');
   }
-
   return generatedSentence;
 };
 
@@ -101,6 +110,7 @@ async function getComplexity (complexity) {
     role: 'system',
     content: `User was asked how difficult the training should be. Their answer: ${complexity}. Rate this difficulty on a 3-point scale, where 1 is easy and 3 is hard, just give the number as the answer`
   }]);
+  
   return parseInt(response.content);
 };
 
