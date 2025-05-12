@@ -19,7 +19,7 @@ const Forecast = ({ data, onClose }) => {
             </div>
             
             <div className={styles.imgWithLine}>
-                <img src={img} className={styles.imgStyle}></img>
+                <img src={img} className={styles.imgStyle}/>
                 <hr className={styles.bottom_line}></hr>
             </div>
             <p className={styles.forecast}>{forecastMessage}</p>
