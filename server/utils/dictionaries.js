@@ -55,16 +55,16 @@ function prompt(word, complexity, usedSentences = new Set()) {
   const examples = combinedDict[word] || [];
   const examplesStr = examples.join('\n');
   
-  basePrompt = `User provided the keyword ${word}.
-      Use the following example sentences to improve generation:\n${examplesStr}
-      \n${usedExamplesStr}
-      \nGenerate a new sentence for English practice with this word, replacing it with '___',
-      user requested training difficulty - ${complexityLevels[complexity]}`;
-
   // basePrompt = `User provided the keyword ${word}.
+  //     Use the following example sentences to improve generation:\n${examplesStr}
   //     \n${usedExamplesStr}
   //     \nGenerate a new sentence for English practice with this word, replacing it with '___',
   //     user requested training difficulty - ${complexityLevels[complexity]}`;
+
+  basePrompt = `User provided the keyword ${word}.
+      \n${usedExamplesStr}
+      \nGenerate a new sentence for English practice with this word, replacing it with '___',
+      user requested training difficulty - ${complexityLevels[complexity]}`;
 
   console.log('Base Prompt', basePrompt);
   return basePrompt;

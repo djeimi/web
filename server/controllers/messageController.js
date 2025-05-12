@@ -106,7 +106,18 @@ exports.processMessage = async (req, res) => {
     } else {
       const response = await client.chat.completions.create({
         model: 'gpt-4o-mini',
-        messages: chatHistory,
+        messages: [
+          { 
+            role: 'system',
+            content: `You are an AI English tutor. Your tasks:
+                      1. ONLY assist with English learning (vocabulary, grammar, training)
+                      2. Politely decline other topics with: "I specialize only in English learning"
+                      3. Use friendly, teaching tone
+                      4. Correct mistakes in user's English
+                      5. Suggest learning activities`
+          },
+          ...chatHistory
+        ],
         tools: [...saveWordTools, ...trainWordTools],
         tool_choice: 'auto',
         temperature: 0.7
