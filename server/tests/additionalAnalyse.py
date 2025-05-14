@@ -7,11 +7,6 @@ from ragas.llms import LangchainLLMWrapper
 from langchain_openai import ChatOpenAI
 import os
 from ragas import evaluate
-        
-# Set proxy environment variables
-os.environ["HTTP_PROXY"] = "http://localhost:2080"
-os.environ["HTTPS_PROXY"] = "http://localhost:2080"
-os.environ["OPENAI_API_KEY"] = "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"
 
 # Load your dataset
 def load_dataset(file_path: str) -> Dict[str, List[str]]:
