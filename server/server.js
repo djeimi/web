@@ -6,7 +6,6 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const messageController = require('./controllers/messageController');
 const db = require('./utils/database');
-const { simulateTraining } = require('./tests/trainingSimulator');
 
 const app = express();
 const port = 5000;

@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 const { makeForecast } = require('../services/forecastService.js');
 
 const { simulateTraining } = require('../tests/trainingSimulator.js');
+const { simulateTrainingAndHintGeneration } = require('../tests/trainingAndHintSimulator.js');
 
 const saltRounds = 10;
 
@@ -379,6 +380,10 @@ router.get('/forecast', async (req, res) => {
 
 router.get('/simulateTraining', async (req, res) => {
   simulateTraining();
+})
+
+router.get('/simulateTrainingAndHintGeneration', async (req, res) => {
+  simulateTrainingAndHintGeneration();
 })
 
 module.exports = router;
