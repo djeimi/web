@@ -35,6 +35,31 @@ const Chat = ({ userId }) => {
   }, [userId, isFirstMessageSent]);
 
   const handleSendMessage = async () => {
+    if (inputValue.trim().toLowerCase() === 'останови тренировку') {
+    // Сначала добавляем сообщение пользователя в историю
+      setMessages(prev => [...prev, { text: inputValue, isUser: true }]);
+      
+      try {
+        const response = await axios.post('http://localhost:5000/process-message', {
+          userId,
+          message: inputValue.trim().toLowerCase(),
+          chatHistory: [...messages, { text: inputValue, isUser: true }].map(msg => 
+            ({ role: msg.isUser ? 'user' : 'assistant', content: msg.text })
+          ),
+          trainingState
+        });
+        
+        // Затем добавляем ответ ассистента
+        setMessages(prev => [...prev, { text: response.data.result, isUser: false }]);
+        setTrainingState(response.data.trainingState);
+      } catch (error) {
+        console.error("Ошибка при остановке тренировки:", error);
+        setMessages(prev => [...prev, { text: 'Ошибка при остановке тренировки', isUser: false }]);
+      }
+      setInputValue('');
+      return;
+    }
+
     if (inputValue.trim()) {
       setMessages(prev => [...prev, { text: inputValue, isUser: true }]);
       setInputValue('');
@@ -169,7 +194,9 @@ const Chat = ({ userId }) => {
             <div className={styles.messages}>
               {messages.map((msg, index) => (
                 <div key={index} className={msg.isUser ? styles.userMessage : styles.botMessage}>
-                  {Array.isArray(msg.text) ? msg.text.join('\n') : msg.text}
+                  {msg.text.toLowerCase() === 'останови тренировку' ? (
+                    <span style={{ fontWeight: 'bold' }}>{msg.text}</span>
+                  ) : Array.isArray(msg.text) ? msg.text.join('\n') : msg.text}
                 </div>
               ))}
               {isThinking && <div className={styles.thinking}>AI ассистент думает..</div>}
@@ -183,7 +210,9 @@ const Chat = ({ userId }) => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask English coach"
+              placeholder={trainingState?.inProgress 
+                ? "Введите ответ или напишите 'останови тренировку' чтобы прервать" 
+                : "Ask English coach"}
             />
             <div className={styles.buttons}>
               <button onClick={handleSendMessage}>Send</button>

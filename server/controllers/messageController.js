@@ -10,6 +10,21 @@ exports.processMessage = async (req, res) => {
 
   console.log(`Received message from user ${userId}: ${message}`);
 
+  // Проверка на стоп-слово
+  if (message.trim().toLowerCase() === 'останови тренировку' && trainingState?.inProgress) {
+    const updatedChatHistory = [
+      ...chatHistory, 
+      { role: 'user', content: message },
+      { role: 'assistant', content: 'Тренировка остановлена. Можете продолжить общение.' }
+    ];
+    
+    return res.json({ 
+      result: 'Тренировка остановлена. Можете продолжить общение.',
+      chatHistory: updatedChatHistory,
+      trainingState: { ...trainingState, inProgress: false }
+    });
+  }
+
   try {
     const vocLen = await getVocLen(userId);
     const initialMessage = `Добрый день, чем хотите заняться сегодня? На текущий момент вы добавили ${vocLen} слов.`;
